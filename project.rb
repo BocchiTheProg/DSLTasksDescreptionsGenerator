@@ -40,8 +40,15 @@ class Project
     end
   end
 
-  def sort_by_priority
-    @tasks.sort_by!(&:priority)
+  def sort_by_priority(order)
+    if order == "INCR"
+      @tasks.sort_by!(&:priority)
+    elsif order == "DECR"
+      @tasks.sort_by!(&:priority).reverse!
+    else
+      puts "Invalid argument."
+      puts "Use: INCR(Increment) or DECR(Decrease)"
+    end
   end
 
   def sort_by_due_date
@@ -161,8 +168,8 @@ class Project
       when /^ADDITIONAL_DESCRIPTION\("(.+),(.+)"\)$/
         raise NoMethodError if @current_task.nil?
         add_description($1, $2)
-      when /^SORT_BY_PRIORITY$/
-        sort_by_priority
+      when /^SORT_BY_PRIORITY\("(.+)"\)$/
+        sort_by_priority($1)
       when /^SORT_BY_DUE_DATE$/
         sort_by_due_date
       when /^SAVE_TO_FILE\("(.+)"\)$/
