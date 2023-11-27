@@ -85,7 +85,7 @@ class Project
         delete_task($1)
       when /^SELECT\("(.+)"\)$/
         if select_task($1).nil?
-          puts "No Task was selected (cannot find Task with name #{$1}.)"
+          puts "No Task was selected (cannot find Task with name #{$1})."
           puts "List of task names in project:"
           @tasks.each { |task| puts task.name}
         else
@@ -97,7 +97,14 @@ class Project
       when /^PRIORITY\((\d+)\)$/
         @current_task.add_priority($1.to_i)
       when /^DUE_DATE\("(.+)"\)$/
-        @current_task.add_due_date($1)
+        date_regex = /^\d{4}-\d{2}-\d{2}$/
+        date = $1
+        if date.match(date_regex)
+          @current_task.add_due_date(date)
+        else
+          puts "Invalid date format."
+          puts "Use: \"yyyy-mm-dd\""
+        end
       when /^EXECUTORS\("(.+)"\)$/
         execs = $1.split(",")
         execs.map! { |exec| exec.strip}
