@@ -1,8 +1,19 @@
 class Project
-  attr_accessor :tasks, :current_task
+  attr_accessor :tasks, :current_task, :operators
 
   def initialize
     @tasks = []
+    @operators = {}
+  end
+
+  def add_operator(name, description)
+    @operators[name] = description
+  end
+
+  def print_help
+    puts "Operators Dictionary"
+    @operators.each { |key, description| puts "#{key}\t\t\t| #{description}"}
+    puts "** - place where you have to input your argument"
   end
 
   def create_task(name)
@@ -24,7 +35,8 @@ class Project
       current_task.instance_variables[0..4].each { |var| raise NameError if var.to_s == "@#{description_name}"}
       @current_task.instance_variable_set("@#{description_name}", description_value)
     rescue NameError
-      puts("Impossible name for additional description.")
+      puts "Impossible name for additional description."
+      puts "You can use alphabetical characters and number (don`t start name with number).\nInstead of spacebars, use '_'."
     end
   end
 
@@ -161,6 +173,7 @@ class Project
         exit
       else
         puts "Invalid command"
+        print_help
       end
     rescue NoMethodError => e
       if @current_task.nil?
@@ -172,7 +185,9 @@ class Project
     end
   end
 
-  def run
+  def run(&block)
+    puts "Tasks Descriptions Generator"
+    instance_eval(&block)
     loop do
       print "> "
       command = gets.chomp
