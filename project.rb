@@ -11,8 +11,12 @@ class Project
     task
   end
 
+  def delete_task(name)
+    @tasks.delete_if { |task| task.name == name }
+  end
+
   def select_task(name)
-    @current_task = @tasks.find { |task| task.name == name }
+    @tasks.find { |task| task.name == name }
   end
 
   def sort_by_priority
@@ -57,12 +61,29 @@ class Project
     end
   end
 
+  def ask_yn_question(question)
+    puts "#{question} [y,n]"
+    print "> "
+    option = gets.chomp.downcase
+    option == "y"
+  end
+
   def execute_command(command)
     case command
     when /^CREATE\("(.+)"\)$/
-      create_task($1)
+      if select_task($1).nil?
+        create_task($1)
+      else
+        puts "Task with name #{$1} already exist."
+        if ask_yn_question("Do you want to recreate this Task?")
+          delete_task($1)
+          create_task($1)
+        end
+      end
+    when /^DELETE\("(.+)"\)$/
+      delete_task($1)
     when /^SELECT\("(.+)"\)$/
-      select_task($1)
+      @current_task = select_task($1)
     when /^DESCRIPTION\("(.+)"\)$/
       @current_task.add_description($1)
     when /^PRIORITY\((\d+)\)$/
