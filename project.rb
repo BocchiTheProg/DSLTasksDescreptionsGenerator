@@ -35,6 +35,28 @@ class Project
     end
   end
 
+  def load_from_file(file_name)
+    @tasks = []
+    @current_task = nil
+    File.open(file_name, 'r') do |file|
+      task = nil
+      file.each_line do |line|
+        case line
+        when /^Task: (.+)$/
+          task = create_task($1)
+        when /^Description: (.+)$/
+          task.add_description($1)
+        when /^Priority: (\d+)$/
+          task.add_priority($1.to_i)
+        when /^Due Date: (.+)$/
+          task.add_due_date($1)
+        when /^Executors: (.+)$/
+          task.add_executors($1.split(', '))
+        end
+      end
+    end
+  end
+
   def execute_command(command)
     case command
     when /^CREATE\("(.+)"\)$/
@@ -55,6 +77,8 @@ class Project
       sort_by_due_date
     when /^SAVE_TO_FILE\("(.+)"\)$/
       save_to_file($1)
+    when /^LOAD_FROM_FILE\("(.+)"\)$/
+      load_from_file($1)
     when /^QUIT$/
       exit
     else
