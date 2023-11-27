@@ -84,11 +84,12 @@ class Project
       when /^DELETE\("(.+)"\)$/
         delete_task($1)
       when /^SELECT\("(.+)"\)$/
-        if (@current_task = select_task($1)).nil?
+        if select_task($1).nil?
           puts "No Task was selected (cannot find Task with name #{$1}.)"
           puts "List of task names in project:"
           @tasks.each { |task| puts task.name}
         else
+          @current_task = select_task($1)
           puts "Task: #{$1} was selected."
         end
       when /^DESCRIPTION\("(.+)"\)$/
@@ -97,8 +98,19 @@ class Project
         @current_task.add_priority($1.to_i)
       when /^DUE_DATE\("(.+)"\)$/
         @current_task.add_due_date($1)
-      when /^EXECUTORS\((.+)\)$/
-        @current_task.add_executors($1.split(','))
+      when /^EXECUTORS\("(.+)"\)$/
+        execs = $1.split(",")
+        execs.map! { |exec| exec.strip}
+        if @current_task.executors.empty?
+          @current_task.add_executors(execs)
+        else
+          puts "Task with name #{@current_task.name} already have executors:#{@current_task.executors.join(', ')}."
+          if ask_yn_question("Do you want to change it with new executors?")
+            @current_task.add_executors(execs)
+          elsif ask_yn_question("Do you want to expand it with new executors?")
+            execs.each { |exec| @current_task.executors << exec}
+          end
+        end
       when /^SORT_BY_PRIORITY$/
         sort_by_priority
       when /^SORT_BY_DUE_DATE$/
