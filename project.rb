@@ -19,6 +19,15 @@ class Project
     @tasks.find { |task| task.name == name }
   end
 
+  def add_description(description_name, description_value)
+    begin
+      current_task.instance_variables[0..4].each { |var| raise NameError if var.to_s == "@#{description_name}"}
+      @current_task.instance_variable_set("@#{description_name}", description_value)
+    rescue NameError
+      puts("Impossible name for additional description.")
+    end
+  end
+
   def sort_by_priority
     @tasks.sort_by!(&:priority)
   end
@@ -34,16 +43,24 @@ class Project
         file.write("Description: #{task.description}\n")
         file.write("Priority: #{task.priority}\n")
         file.write("Due Date: #{task.due_date}\n")
-        file.write("Executors: #{task.executors.join(', ')}\n\n")
+        file.write("Executors: #{task.executors.join(', ')}\n")
+        if task.instance_variables.size > 5
+          file.write"ADDITIONAL DESCRIPTIONS\n"
+          task.instance_variables[5..].each do |attr_name|
+            attr_value = task.instance_variable_get(attr_name)
+            file.write("#{attr_name[1..]}: #{attr_value}\n")
+          end
+        end
+        file.write"\n"
       end
     end
   end
 
   def load_from_file(file_name)
     @tasks = []
-    @current_task = nil
     File.open(file_name, 'r') do |file|
       task = nil
+      flag = false
       file.each_line do |line|
         case line
         when /^Task: (.+)$/
@@ -56,9 +73,20 @@ class Project
           task.add_due_date($1)
         when /^Executors: (.+)$/
           task.add_executors($1.split(', '))
+        when "ADDITIONAL DESCRIPTIONS\n"
+          flag = true
+        else
+          if line.chomp.empty?
+            flag = false
+          elsif flag
+            description = line.chomp.split(": ")
+            @current_task = task
+            add_description(description[0], description[1])
+          end
         end
       end
     end
+    @current_task = nil
   end
 
   def ask_yn_question(question)
@@ -118,6 +146,9 @@ class Project
             execs.each { |exec| @current_task.executors << exec}
           end
         end
+      when /^ADDITIONAL_DESCRIPTION\("(.+),(.+)"\)$/
+        raise NoMethodError if @current_task.nil?
+        add_description($1, $2)
       when /^SORT_BY_PRIORITY$/
         sort_by_priority
       when /^SORT_BY_DUE_DATE$/
