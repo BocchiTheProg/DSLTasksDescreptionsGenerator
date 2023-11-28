@@ -1,5 +1,5 @@
 class Task
-  attr_accessor :name, :description, :priority, :due_date, :executors
+  attr_reader :name, :description, :priority, :due_date, :executors
 
   def initialize(name)
     @name = name
