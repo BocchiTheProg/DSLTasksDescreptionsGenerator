@@ -4,6 +4,7 @@ require_relative './project'
 project = Project.new
 
 project.run do
+  # adding operators using block
   add_operator("CREATE", "CREATE(\"*Task name*\") - create new Task in project (created Task become selected).")
   add_operator("DELETE", "DELETE(\"*Task name*\") - delete Task from project.")
   add_operator("SELECT", "SELECT(\"*Task name*\") - select certain Task in project.")

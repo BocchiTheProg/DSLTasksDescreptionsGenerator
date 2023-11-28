@@ -1,4 +1,6 @@
+# class to represent task
 class Task
+  # main description characteristics
   attr_reader :name, :description, :priority, :due_date, :executors
 
   def initialize(name)

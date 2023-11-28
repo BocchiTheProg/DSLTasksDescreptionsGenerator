@@ -1,37 +1,45 @@
 class Project
+  # @current_task is selected task to work with
   attr_accessor :tasks, :current_task, :operators
 
   def initialize
-    @tasks = []
-    @operators = {}
+    @tasks = [] # tasks in project
+    @operators = {} # operators to work(manipulate) with project
   end
 
+  # adding operator
   def add_operator(name, description)
     @operators[name] = description
   end
 
+  # operators dictionary
   def print_help
     puts "Operators Dictionary"
     @operators.each { |key, description| puts "#{key}\t\t\t| #{description}"}
     puts "** - place where you have to input your argument"
   end
 
+  # creating new task to project
   def create_task(name)
     task = Task.new(name)
     @tasks << task
     task
   end
 
+  # deleting task from project
   def delete_task(name)
     @tasks.delete_if { |task| task.name == name }
   end
 
+  # selecting task from project
   def select_task(name)
     @tasks.find { |task| task.name == name }
   end
 
+  # adding unique description characteristic for selected task
   def add_description(description_name, description_value)
     begin
+      # no access to change values of main description characteristic
       current_task.instance_variables[0..4].each { |var| raise NameError if var.to_s == "@#{description_name}"}
       @current_task.instance_variable_set("@#{description_name}", description_value)
     rescue NameError
@@ -40,6 +48,7 @@ class Project
     end
   end
 
+  # sort all tasks of project by priority
   def sort_by_priority(order)
     if order == "INCR"
       @tasks.sort_by!(&:priority)
@@ -51,18 +60,22 @@ class Project
     end
   end
 
+  # sort all tasks of project by due time
   def sort_by_due_date
     @tasks.sort_by!(&:due_date)
   end
 
+  # saving all tasks to file
   def save_to_file(file_name)
     File.open(file_name, 'w') do |file|
       @tasks.each do |task|
+        # writing main description characteristics
         file.write("Task: #{task.name}\n")
         file.write("Description: #{task.description}\n")
         file.write("Priority: #{task.priority}\n")
         file.write("Due Date: #{task.due_date}\n")
         file.write("Executors: #{task.executors.join(', ')}\n")
+        # writing unique description characteristics (in included in task)
         if task.instance_variables.size > 5
           file.write"ADDITIONAL DESCRIPTIONS\n"
           task.instance_variables[5..].each do |attr_name|
@@ -75,6 +88,7 @@ class Project
     end
   end
 
+  # load tasks from file
   def load_from_file(file_name)
     @tasks = []
     begin
@@ -83,6 +97,7 @@ class Project
         flag = false
         file.each_line do |line|
           case line
+            # reading main description characteristics
           when /^Task: (.+)$/
             task = create_task($1)
           when /^Description: (.+)$/
@@ -93,6 +108,7 @@ class Project
             task.add_due_date($1)
           when /^Executors: (.+)$/
             task.add_executors($1.split(', '))
+            # reading unique description characteristics
           when "ADDITIONAL DESCRIPTIONS\n"
             flag = true
           else
@@ -106,10 +122,11 @@ class Project
           end
         end
       end
-    rescue => e
+    rescue => e # handling errors when trying to read file
       puts "Can`t find or read the file: #{file_name}."
       puts "Error: #{e.message}"
     end
+    # no task selected after loading
     @current_task = nil
   end
 
@@ -120,12 +137,14 @@ class Project
     option == "y"
   end
 
+  # parse command(operator) from user input (in console)
   def execute_command(command)
     begin
       case command
       when /^CREATE\("(.+)"\)$/
         task_name = $1.strip
         if select_task(task_name).nil?
+          # select created task
           @current_task = create_task(task_name)
         else
           puts "Task with name #{task_name} already exist."
@@ -136,6 +155,7 @@ class Project
         end
       when /^DELETE\("(.+)"\)$/
         delete_task($1.strip)
+        # unselect task if it was deleted
         @current_task = nil if !@current_task.nil? and @current_task.name == $1.strip
       when /^SELECT\("(.+)"\)$/
         task_name = $1.strip
@@ -187,11 +207,12 @@ class Project
       when /^QUIT$/
         exit
       else
+        # print operators dictionary if cannot parse command (operator)
         puts "Invalid command"
         print_help
       end
     rescue NoMethodError => e
-      if @current_task.nil?
+      if @current_task.nil? # handling error if no task was selected
         puts "Cant add descriptions, no Task was selected."
         puts "Use SELECT operator."
       else
@@ -200,6 +221,7 @@ class Project
     end
   end
 
+  # reading user inputs (in console)
   def run(&block)
     puts "Tasks Descriptions Generator"
     instance_eval(&block)
