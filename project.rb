@@ -77,33 +77,38 @@ class Project
 
   def load_from_file(file_name)
     @tasks = []
-    File.open(file_name, 'r') do |file|
-      task = nil
-      flag = false
-      file.each_line do |line|
-        case line
-        when /^Task: (.+)$/
-          task = create_task($1)
-        when /^Description: (.+)$/
-          task.add_description($1)
-        when /^Priority: (\d+)$/
-          task.add_priority($1.to_i)
-        when /^Due Date: (.+)$/
-          task.add_due_date($1)
-        when /^Executors: (.+)$/
-          task.add_executors($1.split(', '))
-        when "ADDITIONAL DESCRIPTIONS\n"
-          flag = true
-        else
-          if line.chomp.empty?
-            flag = false
-          elsif flag
-            description = line.chomp.split(": ")
-            @current_task = task
-            add_description(description[0], description[1])
+    begin
+      File.open(file_name, 'r') do |file|
+        task = nil
+        flag = false
+        file.each_line do |line|
+          case line
+          when /^Task: (.+)$/
+            task = create_task($1)
+          when /^Description: (.+)$/
+            task.add_description($1)
+          when /^Priority: (\d+)$/
+            task.add_priority($1.to_i)
+          when /^Due Date: (.+)$/
+            task.add_due_date($1)
+          when /^Executors: (.+)$/
+            task.add_executors($1.split(', '))
+          when "ADDITIONAL DESCRIPTIONS\n"
+            flag = true
+          else
+            if line.chomp.empty?
+              flag = false
+            elsif flag
+              description = line.chomp.split(": ")
+              @current_task = task
+              add_description(description[0], description[1])
+            end
           end
         end
       end
+    rescue => e
+      puts "Can`t find or read the file: #{file_name}."
+      puts "Error: #{e.message}"
     end
     @current_task = nil
   end
