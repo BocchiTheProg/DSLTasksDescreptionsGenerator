@@ -178,7 +178,7 @@ class Project
           @current_task.add_due_date(date)
         else
           puts "Invalid date format."
-          puts "Use: \"yyyy-mm-dd\""
+          puts "Use: yyyy-mm-dd"
         end
       when /^EXECUTORS (.+)$/
         execs = $1.split(",")
