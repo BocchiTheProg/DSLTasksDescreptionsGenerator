@@ -124,24 +124,27 @@ class Project
     begin
       case command
       when /^CREATE\("(.+)"\)$/
-        if select_task($1).nil?
-          create_task($1)
+        task_name = $1.strip
+        if select_task(task_name).nil?
+          @current_task = create_task(task_name)
         else
-          puts "Task with name #{$1} already exist."
+          puts "Task with name #{task_name} already exist."
           if ask_yn_question("Do you want to recreate this Task?")
-            delete_task($1)
-            create_task($1)
+            delete_task(task_name)
+            @current_task = create_task(task_name)
           end
         end
       when /^DELETE\("(.+)"\)$/
-        delete_task($1)
+        delete_task($1.strip)
+        @current_task = nil if !@current_task.nil? and @current_task.name == $1.strip
       when /^SELECT\("(.+)"\)$/
-        if select_task($1).nil?
-          puts "No Task was selected (cannot find Task with name #{$1})."
+        task_name = $1.strip
+        if select_task(task_name).nil?
+          puts "No Task was selected (cannot find Task with name #{task_name})."
           puts "List of task names in project:"
           @tasks.each { |task| puts task.name}
         else
-          @current_task = select_task($1)
+          @current_task = select_task(task_name)
           puts "Task: #{$1} was selected."
         end
       when /^DESCRIPTION\("(.+)"\)$/
@@ -150,7 +153,7 @@ class Project
         @current_task.add_priority($1.to_i)
       when /^DUE_DATE\("(.+)"\)$/
         date_regex = /^\d{4}-\d{2}-\d{2}$/
-        date = $1
+        date = $1.strip
         if date.match(date_regex)
           @current_task.add_due_date(date)
         else
@@ -170,11 +173,11 @@ class Project
             execs.each { |exec| @current_task.executors << exec}
           end
         end
-      when /^ADDITIONAL_DESCRIPTION\("(.+),(.+)"\)$/
+      when /^ADDITIONAL_DESCRIPTION\("(.+):(.+)"\)$/
         raise NoMethodError if @current_task.nil?
-        add_description($1, $2)
+        add_description($1.strip, $2.strip)
       when /^SORT_BY_PRIORITY\("(.+)"\)$/
-        sort_by_priority($1)
+        sort_by_priority($1.strip)
       when /^SORT_BY_DUE_DATE$/
         sort_by_due_date
       when /^SAVE_TO_FILE\("(.+)"\)$/
@@ -202,7 +205,7 @@ class Project
     instance_eval(&block)
     loop do
       print "> "
-      command = gets.chomp
+      command = gets.chomp.strip
       execute_command(command)
     end
   end
