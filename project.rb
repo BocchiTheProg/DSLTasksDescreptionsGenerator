@@ -141,7 +141,7 @@ class Project
   def execute_command(command)
     begin
       case command
-      when /^CREATE\("(.+)"\)$/
+      when /^CREATE (.+)$/
         task_name = $1.strip
         if select_task(task_name).nil?
           # select created task
@@ -153,11 +153,11 @@ class Project
             @current_task = create_task(task_name)
           end
         end
-      when /^DELETE\("(.+)"\)$/
+      when /^DELETE (.+)$/
         delete_task($1.strip)
         # unselect task if it was deleted
         @current_task = nil if !@current_task.nil? and @current_task.name == $1.strip
-      when /^SELECT\("(.+)"\)$/
+      when /^SELECT (.+)$/
         task_name = $1.strip
         if select_task(task_name).nil?
           puts "No Task was selected (cannot find Task with name #{task_name})."
@@ -167,11 +167,11 @@ class Project
           @current_task = select_task(task_name)
           puts "Task: #{$1} was selected."
         end
-      when /^DESCRIPTION\("(.+)"\)$/
+      when /^DESCRIPTION (.+)$/
         @current_task.add_description($1)
-      when /^PRIORITY\((\d+)\)$/
+      when /^PRIORITY (\d+)$/
         @current_task.add_priority($1.to_i)
-      when /^DUE_DATE\("(.+)"\)$/
+      when /^DUE DATE (.+)$/
         date_regex = /^\d{4}-\d{2}-\d{2}$/
         date = $1.strip
         if date.match(date_regex)
@@ -180,7 +180,7 @@ class Project
           puts "Invalid date format."
           puts "Use: \"yyyy-mm-dd\""
         end
-      when /^EXECUTORS\("(.+)"\)$/
+      when /^EXECUTORS (.+)$/
         execs = $1.split(",")
         execs.map! { |exec| exec.strip}
         if @current_task.executors.empty?
@@ -193,16 +193,16 @@ class Project
             execs.each { |exec| @current_task.executors << exec}
           end
         end
-      when /^ADDITIONAL_DESCRIPTION\("(.+):(.+)"\)$/
+      when /^ADDITIONAL DESCRIPTION (.+):(.+)$/
         raise NoMethodError if @current_task.nil?
         add_description($1.strip, $2.strip)
-      when /^SORT_BY_PRIORITY\("(.+)"\)$/
+      when /^SORT BY PRIORITY (.+)$/
         sort_by_priority($1.strip)
-      when /^SORT_BY_DUE_DATE$/
+      when /^SORT BY DUE DATE$/
         sort_by_due_date
-      when /^SAVE_TO_FILE\("(.+)"\)$/
+      when /^SAVE TO FILE (.+)$/
         save_to_file($1)
-      when /^LOAD_FROM_FILE\("(.+)"\)$/
+      when /^LOAD FROM FILE (.+)$/
         load_from_file($1)
       when /^QUIT$/
         exit
