@@ -38,14 +38,8 @@ class Project
 
   # adding unique description characteristic for selected task
   def add_description(description_name, description_value)
-    begin
-      # no access to change values of main description characteristic
-      current_task.instance_variables[0..4].each { |var| raise NameError if var.to_s == "@#{description_name}"}
-      @current_task.instance_variable_set("@#{description_name}", description_value)
-    rescue NameError
-      puts "Impossible name for additional description."
-      puts "You can use alphabetical characters and number (don`t start name with number).\nInstead of spacebars, use '_'."
-    end
+    name = description_name.tr(':','')
+    @current_task.add_additional_description(name.to_sym, description_value)
   end
 
   # sort all tasks of project by priority
@@ -75,12 +69,11 @@ class Project
         file.write("Priority: #{task.priority}\n")
         file.write("Due Date: #{task.due_date}\n")
         file.write("Executors: #{task.executors.join(', ')}\n")
-        # writing unique description characteristics (in included in task)
-        if task.instance_variables.size > 5
+        # writing unique description characteristics (if included in task)
+        unless task.additional_description.empty?
           file.write"ADDITIONAL DESCRIPTIONS\n"
-          task.instance_variables[5..].each do |attr_name|
-            attr_value = task.instance_variable_get(attr_name)
-            file.write("#{attr_name[1..]}: #{attr_value}\n")
+          task.additional_description.each do |key, value|
+            file.write("#{key.to_s}: #{value}\n")
           end
         end
         file.write"\n"
@@ -108,7 +101,7 @@ class Project
             task.add_due_date($1)
           when /^Executors: (.+)$/
             task.add_executors($1.split(', '))
-            # reading unique description characteristics
+          # reading unique(additional) description characteristics
           when "ADDITIONAL DESCRIPTIONS\n"
             flag = true
           else
@@ -116,8 +109,7 @@ class Project
               flag = false
             elsif flag
               description = line.chomp.split(": ")
-              @current_task = task
-              add_description(description[0], description[1])
+              task.add_additional_description(description[0].to_sym, description[1])
             end
           end
         end
@@ -194,7 +186,6 @@ class Project
           end
         end
       when /^ADDITIONAL DESCRIPTION (.+):(.+)$/
-        raise NoMethodError if @current_task.nil?
         add_description($1.strip, $2.strip)
       when /^SORT BY PRIORITY (.+)$/
         sort_by_priority($1.strip)
