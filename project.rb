@@ -56,6 +56,7 @@ class Project
     end
   end
 
+  # adding task due date
   def add_due_date(date)
     date_regex = /^\d{4}-\d{2}-\d{2}$/
     if date.match(date_regex)
@@ -66,6 +67,7 @@ class Project
     end
   end
 
+  # adding task executors
   def add_executors(execs)
     execs = execs.split(",")
     execs.map! { |exec| exec.strip}
@@ -128,6 +130,10 @@ class Project
 
   # load tasks from file
   def load_from_file(file_name)
+    unless File.exist?("#{file_name}")
+      puts "Can`t find file: #{file_name}"
+      return nil
+    end
     @tasks = []
     begin
       File.open(file_name, 'r') do |file|
@@ -160,7 +166,7 @@ class Project
         end
       end
     rescue => e # handling errors when trying to read file
-      puts "Can`t find or read the file: #{file_name}."
+      puts "Can`t read the file: #{file_name}."
       puts "Error: #{e.message}"
     end
     # no task selected after loading
