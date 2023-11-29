@@ -19,21 +19,66 @@ class Project
     puts "** - place where you have to input your argument"
   end
 
-  # creating new task to project
-  def create_task(name)
-    task = Task.new(name)
-    @tasks << task
-    task
-  end
-
-  # deleting task from project
-  def delete_task(name)
-    @tasks.delete_if { |task| task.name == name }
+  def ask_yn_question(question)
+    puts "#{question} [y,n]"
+    print "> "
+    option = gets.chomp.downcase
+    option == "y"
   end
 
   # selecting task from project
   def select_task(name)
     @tasks.find { |task| task.name == name }
+  end
+
+  # deleting task from project
+  def delete_task(name)
+    @tasks.delete_if { |task| task.name == name }
+    # unselect task if it was deleted
+    @current_task = nil if !@current_task.nil? and @current_task.name == name
+  end
+
+  # creating new task to project
+  def create_task(name)
+    if select_task(name).nil?
+      task = Task.new(name)
+      @tasks << task
+      # select created task
+      @current_task = task
+    else
+      puts "Task with name #{name} already exist."
+      if ask_yn_question("Do you want to recreate this Task?")
+        delete_task(name)
+        task = Task.new(name)
+        @tasks << task
+        @current_task = task
+      end
+    end
+  end
+
+  def add_due_date(date)
+    date_regex = /^\d{4}-\d{2}-\d{2}$/
+    if date.match(date_regex)
+      @current_task.add_due_date(date)
+    else
+      puts "Invalid date format."
+      puts "Use: yyyy-mm-dd"
+    end
+  end
+
+  def add_executors(execs)
+    execs = execs.split(",")
+    execs.map! { |exec| exec.strip}
+    if @current_task.executors.empty?
+      @current_task.add_executors(execs)
+    else
+      puts "Task with name #{@current_task.name} already have executors:#{@current_task.executors.join(', ')}."
+      if ask_yn_question("Do you want to change it with new executors?")
+        @current_task.add_executors(execs)
+      elsif ask_yn_question("Do you want to expand it with new executors?")
+        execs.each { |exec| @current_task.executors << exec}
+      end
+    end
   end
 
   # adding unique description characteristic for selected task
@@ -122,33 +167,14 @@ class Project
     @current_task = nil
   end
 
-  def ask_yn_question(question)
-    puts "#{question} [y,n]"
-    print "> "
-    option = gets.chomp.downcase
-    option == "y"
-  end
-
   # parse command(operator) from user input (in console)
   def execute_command(command)
     begin
       case command
       when /^CREATE (.+)$/
-        task_name = $1.strip
-        if select_task(task_name).nil?
-          # select created task
-          @current_task = create_task(task_name)
-        else
-          puts "Task with name #{task_name} already exist."
-          if ask_yn_question("Do you want to recreate this Task?")
-            delete_task(task_name)
-            @current_task = create_task(task_name)
-          end
-        end
+        create_task($1.strip)
       when /^DELETE (.+)$/
         delete_task($1.strip)
-        # unselect task if it was deleted
-        @current_task = nil if !@current_task.nil? and @current_task.name == $1.strip
       when /^SELECT (.+)$/
         task_name = $1.strip
         if select_task(task_name).nil?
@@ -164,27 +190,10 @@ class Project
       when /^PRIORITY (\d+)$/
         @current_task.add_priority($1.to_i)
       when /^DUE DATE (.+)$/
-        date_regex = /^\d{4}-\d{2}-\d{2}$/
         date = $1.strip
-        if date.match(date_regex)
-          @current_task.add_due_date(date)
-        else
-          puts "Invalid date format."
-          puts "Use: yyyy-mm-dd"
-        end
+        add_due_date(date)
       when /^EXECUTORS (.+)$/
-        execs = $1.split(",")
-        execs.map! { |exec| exec.strip}
-        if @current_task.executors.empty?
-          @current_task.add_executors(execs)
-        else
-          puts "Task with name #{@current_task.name} already have executors:#{@current_task.executors.join(', ')}."
-          if ask_yn_question("Do you want to change it with new executors?")
-            @current_task.add_executors(execs)
-          elsif ask_yn_question("Do you want to expand it with new executors?")
-            execs.each { |exec| @current_task.executors << exec}
-          end
-        end
+        add_executors($1.strip)
       when /^ADDITIONAL DESCRIPTION (.+):(.+)$/
         add_description($1.strip, $2.strip)
       when /^SORT BY PRIORITY (.+)$/
