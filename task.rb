@@ -1,14 +1,16 @@
 # class to represent task
 class Task
-  # main description characteristics
-  attr_reader :name, :description, :priority, :due_date, :executors
+  attr_reader :name, :description, :priority, :due_date, :executors, :additional_description
 
   def initialize(name)
+    # main description characteristics
     @name = name
     @description = ''
     @priority = 0
     @due_date = ''
     @executors = []
+    # unique description characteristics
+    @additional_description = {}
   end
 
   def add_description(description)
@@ -25,5 +27,9 @@ class Task
 
   def add_executors(executors)
     @executors = executors
+  end
+
+  def add_additional_description(name, description)
+    @additional_description[name] = description
   end
 end
